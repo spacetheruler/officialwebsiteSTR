@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPACE HQ</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --p: #D9437A; --p2: #F272AE; --pd: #A6123A;
+  --void: #060305; --s: #0d080b; --s2: #160c10; --s3: #1d0f14;
+  --w: #f8f4f6; --ch: #c8c8d4; --dim: #7a6a70;
+  --err: #e05070; --ok: #4ade80; --warn: #f59e0b;
+}
+html, body { height: 100%; }
+body { background: var(--void); color: var(--w); font-family: "Space Grotesk", sans-serif; min-height: 100vh; }
+
+/* LOGIN */
+.login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; }
+.login-card { width:100%; max-width:400px; padding:52px 44px; background:var(--s); border:1px solid rgba(217,67,122,.18); }
+.login-brand { text-align:center; margin-bottom:36px; }
+.login-brand-name { font-family:"Orbitron",monospace; font-size:11px; letter-spacing:.45em; color:var(--p); text-transform:uppercase; display:block; margin-bottom:5px; }
+.login-brand-sub { font-size:9px; letter-spacing:.28em; color:var(--dim); text-transform:uppercase; }
+.login-title { font-family:"Orbitron",monospace; font-size:13px; font-weight:700; letter-spacing:.2em; color:var(--w); text-align:center; margin-bottom:32px; text-transform:uppercase; }
+.field { margin-bottom:18px; }
+.field label { font-family:"Orbitron",monospace; font-size:7px; letter-spacing:.28em; color:var(--dim); text-transform:uppercase; display:block; margin-bottom:8px; }
+.field input, .field select, .field textarea {
+  width:100%; padding:12px 14px; background:rgba(255,255,255,.04);
+  border:1px solid rgba(217,67,122,.18); color:var(--w); font-size:13px;
+  font-family:"Space Grotesk",sans-serif; outline:none; transition:border-color .25s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color:rgba(217,67,122,.5); background:rgba(217,67,122,.04); }
+.field input::placeholder, .field textarea::placeholder { color:var(--dim); }
+.field select option { background:#0d080b; }
+.field textarea { resize:vertical; min-height:80px; font-family:"Space Grotesk",sans-serif; }
+.field small { font-size:9px; color:var(--dim); margin-top:5px; display:block; }
+.input-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.input-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+.login-btn { width:100%; padding:14px; margin-top:8px; background:var(--p); border:1px solid var(--p); font-family:"Orbitron",monospace; font-size:8px; letter-spacing:.28em; color:var(--void); text-transform:uppercase; cursor:pointer; transition:all .3s; }
+.login-btn:hover { background:var(--p2); border-color:var(--p2); }
+.login-btn:disabled { opacity:.5; cursor:not-allowed; }
+.login-error { font-size:11px; color:var(--err); letter-spacing:.04em; margin-top:12px; padding:8px 12px; border:1px solid rgba(224,80,112,.25); background:rgba(224,80,112,.06); display:none; }
+.login-error.show { display:block; }
+.back-link { display:block; text-align:center; margin-top:20px; font-size:11px; color:var(--dim); text-decoration:none; transition:color .25s; }
+.back-link:hover { color:var(--p); }
+
+/* APP SHELL */
+.app { display:none; min-height:100vh; }
+.app.show { display:flex; }
+.sidebar { width:230px; min-height:100vh; background:var(--s); border-right:1px solid rgba(217,67,122,.1); flex-shrink:0; display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow:hidden; }
+.sb-hdr { padding:26px 22px 20px; border-bottom:1px solid rgba(217,67,122,.08); }
+.sb-brand { font-family:"Orbitron",monospace; font-size:9px; letter-spacing:.3em; color:var(--p); text-transform:uppercase; display:block; margin-bottom:4px; }
+.sb-project { font-size:10px; color:var(--dim); }
+.sb-nav { flex:1; padding:10px 0; overflow-y:auto; }
+.sb-section-label { font-family:"Orbitron",monospace; font-size:6.5px; letter-spacing:.3em; color:var(--dim); text-transform:uppercase; padding:14px 22px 6px; }
+.sb-item { display:flex; align-items:center; gap:10px; padding:9px 22px; cursor:pointer; transition:all .2s; font-size:12px; color:var(--dim); letter-spacing:.03em; border-left:2px solid transparent; }
+.sb-item:hover { background:rgba(217,67,122,.05); color:var(--ch); }
+.sb-item.active { background:rgba(217,67,122,.08); color:var(--p); border-left-color:var(--p); }
+.sb-item svg { width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:1.8; flex-shrink:0; }
+.sb-item.soon { opacity:.45; }
+.sb-item.soon:hover { color:var(--dim); background:none; cursor:default; }
+.sb-soon-tag { margin-left:auto; font-family:"Orbitron",monospace; font-size:5.5px; letter-spacing:.1em; color:var(--dim); border:1px solid rgba(217,67,122,.12); padding:1px 5px; text-transform:uppercase; }
+.sb-footer { padding:14px 22px; border-top:1px solid rgba(217,67,122,.08); }
+.sb-user { font-size:10px; color:var(--dim); margin-bottom:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sb-logout { width:100%; padding:9px; background:transparent; border:1px solid rgba(217,67,122,.2); font-family:"Orbitron",monospace; font-size:7px; letter-spacing:.22em; color:var(--dim); text-transform:uppercase; cursor:pointer; transition:all .25s; }
+.sb-logout:hover { border-color:var(--p); color:var(--p); }
+
+.main { flex:1; padding:44px 48px; overflow-y:auto; }
+.page-hdr { margin-bottom:32px; display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
+.page-hdr h1 { font-family:"Orbitron",monospace; font-size:13px; font-weight:700; letter-spacing:.25em; color:var(--w); text-transform:uppercase; margin-bottom:6px; }
+.page-hdr p { font-size:12px; color:var(--dim); letter-spacing:.05em; }
+.page-hdr-actions { display:flex; gap:10px; flex-shrink:0; }
+
+.card { background:var(--s); border:1px solid rgba(217,67,122,.1); padding:26px; margin-bottom:18px; }
+.card-title { font-family:"Orbitron",monospace; font-size:8px; letter-spacing:.3em; color:var(--p); text-transform:uppercase; margin-bottom:16px; display:block; }
+
+/* Dashboard widgets */
+.ov-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:2px; background:rgba(217,67,122,.06); margin-bottom:24px; }
+.ov-card { background:var(--s); padding:20px 16px; text-align:center; }
+.ov-n { font-family:"Orbitron",monospace; font-size:24px; font-weight:700; color:var(--w); line-height:1; margin-bottom:5px; }
+.ov-l { font-size:7px; letter-spacing:.18em; color:var(--dim); text-transform:uppercase; }
+
+.widget-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; margin-bottom:20px; }
+.widget { background:var(--s); border:1px solid rgba(217,67,122,.1); padding:20px 22px; }
+.widget-label { font-family:"Orbitron",monospace; font-size:7px; letter-spacing:.28em; color:var(--p); text-transform:uppercase; margin-bottom:14px; display:block; }
+.widget-empty { font-size:11px; color:var(--dim); font-style:italic; padding:8px 0; }
+.widget-item { display:flex; gap:12px; align-items:center; }
+.widget-thumb { width:44px; height:44px; border-radius:3px; object-fit:cover; flex-shrink:0; background:rgba(217,67,122,.08); }
+.widget-title { font-size:12px; color:var(--w); margin-bottom:3px; }
+.widget-sub { font-size:9px; color:var(--dim); }
+.health-row { display:flex; align-items:center; justify-content:space-between; padding:7px 0; font-size:11px; }
+.health-label { color:var(--dim); }
+.health-val { color:var(--ch); font-family:"Orbitron",monospace; font-size:11px; }
+.health-dot { width:6px; height:6px; border-radius:50%; background:var(--ok); display:inline-block; margin-right:7px; }
+.health-dot.err { background:var(--err); }
+.search-box { display:flex; gap:8px; margin-bottom:20px; }
+.search-box input { flex:1; padding:12px 16px; background:var(--s); border:1px solid rgba(217,67,122,.15); color:var(--w); font-size:13px; outline:none; }
+.search-box input:focus { border-color:rgba(217,67,122,.4); }
+
+/* Buttons */
+.btn { padding:10px 22px; font-family:"Orbitron",monospace; font-size:7.5px; letter-spacing:.2em; text-transform:uppercase; cursor:pointer; transition:all .25s; border:1px solid; display:inline-flex; align-items:center; gap:7px; text-decoration:none; }
+.btn-primary { background:var(--p); border-color:var(--p); color:var(--void); }
+.btn-primary:hover { background:var(--p2); border-color:var(--p2); }
+.btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+.btn-secondary { background:transparent; border-color:rgba(217,67,122,.25); color:var(--dim); }
+.btn-secondary:hover { border-color:rgba(217,67,122,.5); color:var(--ch); }
+.btn-danger { background:transparent; border-color:rgba(224,80,112,.3); color:var(--err); }
+.btn-danger:hover { background:rgba(224,80,112,.08); border-color:var(--err); }
+.btn-sm { padding:6px 14px; font-size:6.5px; }
+
+/* Content list (Releases/News/Legacy) */
+.content-toolbar { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+.filter-chip { padding:7px 16px; border:1px solid rgba(217,67,122,.18); font-size:10px; color:var(--dim); cursor:pointer; transition:all .25s; letter-spacing:.03em; }
+.filter-chip:hover { border-color:rgba(217,67,122,.4); color:var(--ch); }
+.filter-chip.active { background:rgba(217,67,122,.1); border-color:var(--p); color:var(--p); }
+
+.item-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; margin-bottom:24px; }
+.item-card { background:var(--s); border:1px solid rgba(217,67,122,.1); overflow:hidden; transition:all .3s; }
+.item-card:hover { border-color:rgba(217,67,122,.3); }
+.item-cover { width:100%; aspect-ratio:1/1; background:rgba(217,67,122,.05); position:relative; overflow:hidden; }
+.item-cover img { width:100%; height:100%; object-fit:cover; }
+.item-cover-empty { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:28px; opacity:.15; }
+.item-status-badge { position:absolute; top:8px; left:8px; font-family:"Orbitron",monospace; font-size:5.5px; letter-spacing:.15em; padding:3px 8px; text-transform:uppercase; }
+.badge-draft { background:rgba(245,158,11,.15); border:1px solid rgba(245,158,11,.35); color:var(--warn); }
+.badge-published { background:rgba(74,222,128,.15); border:1px solid rgba(74,222,128,.35); color:var(--ok); }
+.badge-archived { background:rgba(122,106,112,.15); border:1px solid rgba(122,106,112,.35); color:var(--dim); }
+.item-featured-star { position:absolute; top:8px; right:8px; font-size:14px; filter:drop-shadow(0 0 4px rgba(217,67,122,.6)); }
+.item-body { padding:14px 16px 16px; }
+.item-cat { font-family:"Orbitron",monospace; font-size:6px; color:var(--p); letter-spacing:.15em; text-transform:uppercase; display:block; margin-bottom:4px; }
+.item-title { font-size:13px; color:var(--w); font-weight:500; margin-bottom:3px; line-height:1.3; }
+.item-meta { font-size:9.5px; color:var(--dim); margin-bottom:12px; }
+.item-actions { display:flex; gap:6px; }
+.item-actions .btn { flex:1; justify-content:center; padding:7px 10px; }
+
+.list-empty { text-align:center; padding:60px 20px; border:1px dashed rgba(217,67,122,.15); }
+.list-empty-text { font-family:"Cormorant Garamond",serif; font-style:italic; font-size:15px; color:var(--dim); margin-bottom:16px; }
+
+/* Modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(5,2,4,.88); z-index:500; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .3s; backdrop-filter:blur(8px); padding:24px; }
+.modal-overlay.show { opacity:1; pointer-events:all; }
+.modal { width:100%; max-width:720px; max-height:90vh; background:var(--s); border:1px solid rgba(217,67,122,.2); overflow-y:auto; }
+.modal-hdr { padding:20px 26px; border-bottom:1px solid rgba(217,67,122,.1); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:var(--s); z-index:1; }
+.modal-title { font-family:"Orbitron",monospace; font-size:9px; letter-spacing:.28em; color:var(--p); text-transform:uppercase; }
+.modal-close { width:28px; height:28px; border-radius:50%; border:1px solid rgba(217,67,122,.25); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; color:var(--dim); transition:all .25s; background:none; }
+.modal-close:hover { background:rgba(217,67,122,.08); color:var(--p); border-color:var(--p); }
+.modal-body { padding:26px; }
+.modal-section { margin-bottom:22px; padding-bottom:22px; border-bottom:1px solid rgba(217,67,122,.08); }
+.modal-section:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
+.modal-section-label { font-family:"Orbitron",monospace; font-size:7px; letter-spacing:.3em; color:var(--p); text-transform:uppercase; margin-bottom:14px; display:block; }
+.modal-footer { display:flex; gap:10px; justify-content:flex-end; padding-top:6px; }
+
+/* File upload */
+.upload-zone { border:1.5px dashed rgba(217,67,122,.25); padding:24px; text-align:center; cursor:pointer; transition:all .3s; position:relative; }
+.upload-zone:hover { border-color:rgba(217,67,122,.5); background:rgba(217,67,122,.03); }
+.upload-zone.has-image { padding:0; border-style:solid; }
+.upload-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+.upload-preview { width:100%; max-height:220px; object-fit:contain; display:block; background:rgba(0,0,0,.2); }
+.upload-hint { font-size:11px; color:var(--dim); }
+.upload-hint strong { color:var(--p); }
+.upload-progress { height:2px; background:rgba(217,67,122,.1); margin-top:10px; overflow:hidden; display:none; }
+.upload-progress.active { display:block; }
+.upload-progress-fill { height:100%; background:var(--p); width:0%; transition:width .3s; }
+.upload-replace-bar { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; background:var(--s2); font-size:10px; color:var(--dim); }
+
+/* Toggle */
+.toggle-row { display:flex; align-items:center; justify-content:space-between; padding:9px 0; }
+.toggle-row-label { font-size:12px; color:var(--ch); }
+.toggle { width:36px; height:20px; border-radius:10px; background:rgba(217,67,122,.15); border:1px solid rgba(217,67,122,.2); cursor:pointer; position:relative; transition:all .3s; flex-shrink:0; }
+.toggle.on { background:var(--p); border-color:var(--p); }
+.toggle::after { content:""; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:var(--w); transition:transform .3s; }
+.toggle.on::after { transform:translateX(16px); }
+
+/* Tracklist editor */
+.tracklist-editor { display:flex; flex-direction:column; gap:8px; }
+.track-row { display:grid; grid-template-columns:36px 1fr 70px 1fr 28px; gap:8px; align-items:center; }
+.track-row input { padding:8px 10px; background:rgba(255,255,255,.04); border:1px solid rgba(217,67,122,.15); color:var(--w); font-size:11px; outline:none; }
+.track-row input:focus { border-color:rgba(217,67,122,.4); }
+.track-remove { width:28px; height:28px; border-radius:50%; border:1px solid rgba(224,80,112,.25); color:var(--err); background:none; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+.track-remove:hover { background:rgba(224,80,112,.1); }
+.add-track-btn { padding:9px; border:1px dashed rgba(217,67,122,.25); background:none; color:var(--dim); font-size:10px; cursor:pointer; transition:all .25s; margin-top:4px; }
+.add-track-btn:hover { border-color:var(--p); color:var(--p); }
+
+/* Theme cards (existing, kept) */
+.theme-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px; margin-bottom:24px; }
+.theme-card { background:var(--s); border:1px solid rgba(217,67,122,.12); overflow:hidden; position:relative; transition:all .3s; }
+.theme-card:hover { border-color:rgba(217,67,122,.35); transform:translateY(-2px); }
+.theme-card.active-theme { border-color:var(--p); box-shadow:0 0 20px rgba(217,67,122,.15); }
+.tc-preview { height:70px; position:relative; display:flex; align-items:center; justify-content:center; }
+.tc-preview-orb { width:36px; height:36px; border-radius:50%; filter:blur(8px); position:absolute; opacity:.6; }
+.tc-preview-label { font-family:"Orbitron",monospace; font-size:6.5px; letter-spacing:.2em; color:rgba(255,255,255,.7); text-transform:uppercase; position:relative; z-index:1; }
+.tc-body { padding:14px 16px 16px; }
+.tc-name { font-family:"Orbitron",monospace; font-size:9.5px; font-weight:700; letter-spacing:.15em; color:var(--w); margin-bottom:3px; text-transform:uppercase; }
+.tc-era { font-size:9.5px; color:var(--dim); margin-bottom:10px; }
+.tc-active-badge { display:inline-block; font-family:"Orbitron",monospace; font-size:5.5px; letter-spacing:.18em; padding:3px 8px; background:rgba(217,67,122,.12); border:1px solid rgba(217,67,122,.3); color:var(--p); text-transform:uppercase; margin-bottom:10px; }
+.tc-colors { display:flex; gap:5px; margin-bottom:12px; }
+.tc-swatch { width:18px; height:18px; border-radius:50%; border:1px solid rgba(255,255,255,.1); }
+.tc-actions { display:flex; gap:6px; }
+.color-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.color-field label { font-family:"Orbitron",monospace; font-size:6.5px; letter-spacing:.2em; color:var(--dim); text-transform:uppercase; display:block; margin-bottom:6px; }
+.color-input-wrap { display:flex; align-items:center; gap:8px; }
+.color-input-wrap input[type=color] { width:34px; height:34px; border:1px solid rgba(217,67,122,.2); background:none; cursor:pointer; padding:2px; }
+.color-input-wrap input[type=text] { flex:1; padding:9px 12px; background:rgba(255,255,255,.04); border:1px solid rgba(217,67,122,.18); color:var(--w); font-size:12px; outline:none; }
+.add-theme-btn { width:100%; padding:14px; background:none; border:1px dashed rgba(217,67,122,.25); font-family:"Orbitron",monospace; font-size:8px; letter-spacing:.2em; color:var(--dim); text-transform:uppercase; cursor:pointer; transition:all .3s; margin-bottom:22px; }
+.add-theme-btn:hover { border-color:var(--p); color:var(--p); }
+
+/* Storage buckets list */
+.storage-bucket { display:flex; align-items:center; gap:14px; padding:13px 18px; background:var(--s); border:1px solid rgba(217,67,122,.08); margin-bottom:2px; }
+.bucket-icon { font-size:16px; }
+.bucket-name { font-family:"Orbitron",monospace; font-size:9px; letter-spacing:.12em; color:var(--w); display:block; margin-bottom:2px; }
+.bucket-desc { font-size:10px; color:var(--dim); }
+.bucket-status { margin-left:auto; font-family:"Orbitron",monospace; font-size:6.5px; letter-spacing:.12em; padding:3px 9px; }
+.bucket-status.pending { color:var(--warn); border:1px solid rgba(245,158,11,.25); background:rgba(245,158,11,.06); }
+.bucket-status.ready { color:var(--ok); border:1px solid rgba(74,222,128,.25); background:rgba(74,222,128,.06); }
+
+/* Coming soon */
+.coming-soon-wrap { text-align:center; padding:100px 20px; }
+.cs-icon { font-size:36px; opacity:.2; margin-bottom:18px; }
+.cs-title { font-family:"Orbitron",monospace; font-size:12px; letter-spacing:.2em; color:var(--dim); text-transform:uppercase; margin-bottom:10px; }
+.cs-desc { font-size:12px; color:var(--dim); max-width:340px; margin:0 auto; line-height:1.7; }
+
+/* Toast */
+.toast { position:fixed; bottom:24px; right:24px; padding:13px 22px; font-family:"Orbitron",monospace; font-size:8px; letter-spacing:.2em; text-transform:uppercase; transform:translateX(calc(100% + 32px)); transition:transform .35s cubic-bezier(.16,1,.3,1); z-index:999; max-width:320px; }
+.toast.show { transform:translateX(0); }
+.toast.success { background:rgba(74,222,128,.12); border:1px solid rgba(74,222,128,.3); color:var(--ok); }
+.toast.error { background:rgba(224,80,112,.12); border:1px solid rgba(224,80,112,.3); color:var(--err); }
+.toast.info { background:rgba(217,67,122,.12); border:1px solid rgba(217,67,122,.3); color:var(--p2); }
+
+@media(max-width:780px) {
+  .sidebar { width:180px; }
+  .main { padding:28px 20px; }
+  .input-row, .input-row-3 { grid-template-columns:1fr; }
+  .item-grid { grid-template-columns:repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="login-brand">
+      <span class="login-brand-name">SPACE THE RULER</span>
+      <span class="login-brand-sub">Digital Headquarters</span>
+    </div>
+    <div class="login-title">SPACE HQ</div>
+    <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" autocomplete="email"></div>
+    <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Enter SPACE HQ</button>
+    <div class="login-error" id="login-error"></div>
+    <a href="/" class="back-link">← Back to spacetheruler.com</a>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <aside class="sidebar">
+    <div class="sb-hdr">
+      <span class="sb-brand">Space HQ</span>
+      <span class="sb-project">officialwebsiteSTR · v2.0</span>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section-label">Overview</div>
+      <div class="sb-item active" data-page="dashboard" onclick="showPage('dashboard')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard
+      </div>
+
+      <div class="sb-section-label">Content</div>
+      <div class="sb-item" data-page="statistics" onclick="showPage('stats')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Statistics
+      </div>
+      <div class="sb-item" data-page="releases" onclick="showPage('releases')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>Releases
+      </div>
+      <div class="sb-item" data-page="news" onclick="showPage('news')">
+        <svg viewBox="0 0 24 24"><path d="M4 3h16v14H7l-3 3V3z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="14" y2="12"/></svg>News
+      </div>
+      <div class="sb-item" data-page="legacy" onclick="showPage('legacy')">
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.2H22l-6 4.6 2.3 7.2-6.3-4.6-6.3 4.6 2.3-7.2-6-4.6h7.6z"/></svg>Legacy
+      </div>
+
+      <div class="sb-section-label">Design</div>
+      <div class="sb-item" data-page="themes" onclick="showPage('themes')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/></svg>Era Engine
+      </div>
+      <div class="sb-item soon" data-page="wallpapers" onclick="showPage('wallpapers')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Wallpapers<span class="sb-soon-tag">Soon</span>
+      </div>
+      <div class="sb-item" data-page="storage" onclick="showPage('storage')">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Storage
+      </div>
+
+      <div class="sb-section-label">Media</div>
+      <div class="sb-item soon" data-page="photos" onclick="showPage('photos')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Photos<span class="sb-soon-tag">Soon</span>
+      </div>
+      <div class="sb-item soon" data-page="videos" onclick="showPage('videos')">
+        <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>Videos<span class="sb-soon-tag">Soon</span>
+      </div>
+      <div class="sb-item soon" data-page="logos" onclick="showPage('logos')">
+        <svg viewBox="0 0 24 24"><path d="M12 2l9 4.5v9L12 22l-9-6.5v-9z"/></svg>Logos<span class="sb-soon-tag">Soon</span>
+      </div>
+
+      <div class="sb-section-label">Business</div>
+      <div class="sb-item" data-page="businesses" onclick="showPage('businesses')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="14" rx="1"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Businesses
+      </div>
+      <div class="sb-item soon" data-page="tours" onclick="showPage('tours')">
+        <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-11.5A7 7 0 0 1 12 2a7 7 0 0 1 7 7.5C19 14.5 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Tours<span class="sb-soon-tag">Soon</span>
+      </div>
+      <div class="sb-item soon" data-page="partners" onclick="showPage('partners')">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Partners<span class="sb-soon-tag">Soon</span>
+      </div>
+
+      <div class="sb-section-label">System</div>
+      <div class="sb-item" data-page="settings" onclick="showPage('settings')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings
+      </div>
+</nav>
+    <div class="sb-footer">
+      <div class="sb-user" id="sb-user"></div>
+      <button class="sb-logout" onclick="doLogout()">Sign Out</button>
+    </div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <div class="modal-hdr">
+      <span class="modal-title" id="modal-title">Edit</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://fflsclnwjbdavgzwllqn.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_aqZ8MOPo7tLFLrLLZ8tKBw_yQT81vGf';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let allStats = [], allThemes = [], allReleases = [], allLegacy = [], allNews = [];
+let changedKeys = new Set();
+let currentPage = 'dashboard';
+let editingTheme = null, editingRelease = null, editingLegacy = null, editingNews = null;
+let releaseFilter = 'all', newsFilter = 'all', legacyFilter = 'all';
+let pendingUploadUrl = { release: null, legacy: null, news: null };
+let currentSession = null;
+
+// ─── AUTH ───
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw = document.getElementById('login-password').value;
+  const err = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  if (!email || !pw) { showLoginErr('Enter email and password.'); return; }
+  btn.disabled = true; btn.textContent = 'Authenticating...';
+  err.classList.remove('show');
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
+  if (error) { showLoginErr(error.message); btn.disabled=false; btn.textContent='Enter SPACE HQ'; return; }
+  await enterApp(data.session);
+}
+
+function showLoginErr(msg) {
+  const e = document.getElementById('login-error');
+  e.textContent = msg; e.classList.add('show');
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('login-wrap').style.display='flex';
+  document.getElementById('login-email').value='';
+  document.getElementById('login-password').value='';
+  allStats=[]; allThemes=[]; allReleases=[]; allLegacy=[]; allNews=[]; changedKeys.clear();
+}
+
+async function enterApp(session) {
+  currentSession = session;
+  document.getElementById('login-wrap').style.display='none';
+  document.getElementById('app').classList.add('show');
+  document.getElementById('sb-user').textContent = session.user.email;
+  document.getElementById('login-btn').disabled=false;
+  document.getElementById('login-btn').textContent='Enter SPACE HQ';
+  await Promise.all([loadStats(), loadThemes(), loadReleases(), loadLegacy(), loadNews()]);
+  showPage('dashboard');
+}
+
+// ─── DATA LOADERS ───
+async function loadStats() { const { data } = await sb.from('stats').select('*').order('display_order'); allStats = data || []; }
+async function loadThemes() { const { data } = await sb.from('themes').select('*').order('created_at'); allThemes = data || []; }
+async function loadReleases() { const { data } = await sb.from('releases').select('*').order('display_order'); allReleases = data || []; }
+async function loadLegacy() { const { data } = await sb.from('legacy').select('*').order('event_date', { ascending:false }); allLegacy = data || []; }
+async function loadNews() { const { data } = await sb.from('news').select('*').order('publish_date', { ascending:false }); allNews = data || []; }
+
+function getStatValue(key) { const s = allStats.find(x => x.key === key); return s ? s.value : '0'; }
+function fmt(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+function fmtShort(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ─── NAVIGATION ───
+function showPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.sb-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.sb-item[data-page="${page}"]`)?.classList.add('active');
+  const pages = {
+    dashboard: renderDashboard, stats: renderStats,
+    releases: renderReleases, news: renderNews, legacy: renderLegacy,
+    themes: renderThemes, wallpapers: renderComingSoon, storage: renderStorage,
+    photos: renderComingSoon, videos: renderComingSoon, logos: renderComingSoon,
+    tours: renderComingSoon, businesses: renderBusinessLink, partners: renderComingSoon,
+    settings: renderSettings,
+  };
+  if (pages[page]) pages[page](page);
+}
+
+function renderComingSoon(page) {
+  const names = { wallpapers:'Wallpapers Manager', photos:'Photo Library', videos:'Video Library', logos:'Brand Asset Library', tours:'Tour Management', partners:'Partners' };
+  document.getElementById('main').innerHTML = `
+    <div class="page-hdr"><h1>${names[page]||page}</h1></div>
+    <div class="coming-soon-wrap">
+      <div class="cs-icon">◆</div>
+      <div class="cs-title">Coming Soon</div>
+      <div class="cs-desc">This section is planned for a future phase of SPACE HQ. It will be built once the current foundation is fully tested and stable.</div>
+    </div>`;
+}
+
+function renderBusinessLink(page) {
+  document.getElementById('main').innerHTML = `
+    <div class="page-hdr"><h1>Businesses</h1></div>
+    <div class="card">
+      <span class="card-title">World Building</span>
+      <p style="font-size:12px;color:var(--ch);line-height:1.8;margin-bottom:18px;">Business management currently lives inside the World Building section of the public website (YAE, Sound80, EightyWorld, LVAE). A dedicated Businesses table and editor is planned for a future phase.</p>
+      <a href="/#world" target="_blank" class="btn btn-primary">View World Building on Site ↗</a>
+    </div>`;
+}
+
+// ─── DASHBOARD ───
+async function renderDashboard() {
+  const keys = [
+    {key:'total_songs',label:'Songs'}, {key:'total_projects',label:'Projects'},
+    {key:'total_global_views',label:'Views'}, {key:'total_businesses',label:'Businesses'},
+    {key:'countries_reached',label:'Countries'}, {key:'performances',label:'Shows'},
+  ];
+  const activeTheme = allThemes.find(t => t.is_active);
+  const latestRelease = [...allReleases].filter(r=>r.status==='published' && r.release_date).sort((a,b)=>new Date(b.release_date)-new Date(a.release_date))[0]
+    || [...allReleases].filter(r=>r.status==='published').sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0];
+  const latestNews = [...allNews].filter(n=>n.status==='published').sort((a,b)=>new Date(b.publish_date)-new Date(a.publish_date))[0];
+  const latestLegacy = allLegacy[0];
+
+  document.getElementById('main').innerHTML = `
+    <div class="page-hdr"><h1>Dashboard</h1><p>Live overview of the SPACE THE RULER digital headquarters</p></div>
+
+    <div class="search-box">
+      <input type="text" id="global-search" placeholder="Search releases, news, legacy items..." oninput="onGlobalSearch(this.value)">
+    </div>
+    <div id="search-results"></div>
+
+    <div class="ov-grid">${keys.map(s=>`<div class="ov-card"><div class="ov-n">${parseInt(getStatValue(s.key))||0}</div><div class="ov-l">${s.label}</div></div>`).join('')}</div>
+
+    <div class="widget-grid">
+      <div class="widget">
+        <span class="widget-label">Latest Release</span>
+        ${latestRelease ? `<div class="widget-item"><img class="widget-thumb" src="${latestRelease.cover_url||''}" onerror="this.style.display='none'"><div><div class="widget-title">${latestRelease.title}</div><div class="widget-sub">${latestRelease.type.toUpperCase()} · ${fmt(latestRelease.release_date)}</div></div></div>` : '<div class="widget-empty">No published releases yet</div>'}
+      </div>
+      <div class="widget">
+        <span class="widget-label">Latest News</span>
+        ${latestNews ? `<div class="widget-item"><img class="widget-thumb" src="${latestNews.cover_url||''}" onerror="this.style.display='none'"><div><div class="widget-title">${latestNews.headline}</div><div class="widget-sub">${fmt(latestNews.publish_date)}</div></div></div>` : '<div class="widget-empty">No published news yet</div>'}
+      </div>
+      <div class="widget">
+        <span class="widget-label">Latest Legacy Item</span>
+        ${latestLegacy ? `<div class="widget-item"><img class="widget-thumb" src="${latestLegacy.image_url||''}" onerror="this.style.display='none'"><div><div class="widget-title">${latestLegacy.title}</div><div class="widget-sub">${latestLegacy.category} · ${fmt(latestLegacy.event_date)}</div></div></div>` : '<div class="widget-empty">No legacy items yet</div>'}
+      </div>
+      <div class="widget">
+        <span class="widget-label">Active Era</span>
+        ${activeTheme ? `<div class="widget-item"><div style="width:44px;height:44px;border-radius:50%;background:${activeTheme.color_primary};box-shadow:0 0 16px ${activeTheme.color_primary}44;flex-shrink:0;"></div><div><div class="widget-title">${activeTheme.name}</div><div class="widget-sub">${activeTheme.season_era||''}</div></div></div>` : '<div class="widget-empty">No active theme</div>'}
+      </div>
+      <div class="widget" id="health-widget">
+        <span class="widget-label">Database Health</span>
+        <div class="widget-empty">Loading...</div>
+      </div>
+      <div class="widget" id="storage-widget">
+        <span class="widget-label">Storage Buckets</span>
+        <div class="widget-empty">Loading...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="card-title">Quick Publish</span>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="showPage('releases');setTimeout(()=>openReleaseModal(),50)">+ New Release</button>
+        <button class="btn btn-primary" onclick="showPage('news');setTimeout(()=>openNewsModal(),50)">+ New Article</button>
+        <button class="btn btn-primary" onclick="showPage('legacy');setTimeout(()=>openLegacyModal(),50)">+ New Legacy Item</button>
+        <a href="/" target="_blank" class="btn btn-secondary">View Public Site ↗</a>
+      </div>
+    </div>
+  `;
+  loadHealthWidget();
+}
+
+async function loadHealthWidget() {
+  const hw = document.getElementById('health-widget');
+  const sw = document.getElementById('storage-widget');
+  try {
+    const res = await fetch(SUPABASE_URL + '/functions/v1/hq-health', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + currentSession.access_token, 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) throw new Error('Health check failed');
+    const data = await res.json();
+
+    hw.innerHTML = `<span class="widget-label">Database Health</span>` +
+      Object.entries(data.table_counts).map(([table, count]) =>
+        `<div class="health-row"><span class="health-label"><span class="health-dot"></span>${table}</span><span class="health-val">${count} rows</span></div>`
+      ).join('');
+
+    sw.innerHTML = `<span class="widget-label">Storage Buckets</span>` +
+      (data.storage_buckets.length
+        ? data.storage_buckets.map(b => `<div class="health-row"><span class="health-label"><span class="health-dot ${b.public?'':'err'}"></span>${b.name}</span><span class="health-val">${b.public?'Public':'Private'}</span></div>`).join('')
+        : '<div class="widget-empty">No buckets created yet</div>');
+  } catch(e) {
+    hw.innerHTML = `<span class="widget-label">Database Health</span><div class="widget-empty">Unable to load — ${e.message}</div>`;
+    sw.innerHTML = `<span class="widget-label">Storage Buckets</span><div class="widget-empty">Unable to load</div>`;
+  }
+}
+
+function onGlobalSearch(query) {
+  const box = document.getElementById('search-results');
+  if (!query || query.trim().length < 2) { box.innerHTML = ''; return; }
+  const q = query.toLowerCase();
+  const results = [
+    ...allReleases.filter(r => r.title.toLowerCase().includes(q)).map(r => ({type:'Release', title:r.title, action:`showPage('releases');setTimeout(()=>openReleaseModal('${r.id}'),50)`})),
+    ...allNews.filter(n => n.headline.toLowerCase().includes(q)).map(n => ({type:'News', title:n.headline, action:`showPage('news');setTimeout(()=>openNewsModal('${n.id}'),50)`})),
+    ...allLegacy.filter(l => l.title.toLowerCase().includes(q)).map(l => ({type:'Legacy', title:l.title, action:`showPage('legacy');setTimeout(()=>openLegacyModal('${l.id}'),50)`})),
+  ].slice(0, 8);
+  box.innerHTML = results.length
+    ? `<div class="card">` + results.map(r => `<div style="padding:10px 0;border-bottom:1px solid rgba(217,67,122,.06);cursor:pointer;" onclick="${r.action}"><span style="font-family:'Orbitron',monospace;font-size:6.5px;color:var(--p);letter-spacing:.15em;">${r.type}</span><div style="font-size:12px;color:var(--w);margin-top:2px;">${r.title}</div></div>`).join('') + `</div>`
+    : `<div class="card"><span style="font-size:11px;color:var(--dim);">No results found</span></div>`;
+}
+
+// ─── STATISTICS (unchanged from v1) ───
+function renderStats() {
+  const cats = [
+    {key:'profile',label:'Profile'}, {key:'music',label:'Music'}, {key:'audience',label:'Audience'},
+    {key:'performance',label:'Performance'}, {key:'world',label:'World Building'},
+  ];
+  let html = `<div class="page-hdr"><h1>Statistics</h1><p>Changes update the public website immediately after saving</p></div>`;
+  cats.forEach(cat => {
+    const rows = allStats.filter(s => s.category === cat.key);
+    if (!rows.length) return;
+    html += `<span class="card-title" style="margin-top:20px;">${cat.label}</span><div style="display:flex;flex-direction:column;gap:2px;margin-bottom:8px;">`;
+    rows.forEach(s => {
+      html += `<div style="display:grid;grid-template-columns:200px 1fr 110px;background:var(--s);">
+        <div style="padding:13px 16px;font-size:11px;color:var(--ch);border-right:1px solid rgba(217,67,122,.06);">${s.label}<span style="font-family:'Orbitron',monospace;font-size:6.5px;color:var(--dim);letter-spacing:.1em;display:block;margin-top:2px;">${s.key}</span></div>
+        <div style="padding:0 16px;"><input type="text" id="inp-${s.key}" value="${s.value}" data-original="${s.value}" data-key="${s.key}" oninput="onStatChange(this)" onkeydown="if(event.key==='Enter')saveStats()" style="width:100%;padding:9px 12px;background:transparent;border:1px solid transparent;color:var(--w);font-size:14px;font-family:'Orbitron',monospace;font-weight:600;outline:none;"></div>
+        <div style="padding:13px 16px;font-size:8.5px;color:var(--dim);text-align:right;border-left:1px solid rgba(217,67,122,.06);" id="upd-${s.key}">${fmtShort(s.updated_at)}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  html += `<div style="position:sticky;bottom:0;background:rgba(6,3,5,.96);border-top:1px solid rgba(217,67,122,.15);padding:14px 0;display:flex;align-items:center;justify-content:space-between;margin-top:20px;">
+    <div class="changes-count" id="ch-count" style="font-size:11px;color:var(--dim);">No unsaved changes</div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-secondary" onclick="discardStats()">Discard</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveStats()" disabled>Save Changes</button>
+    </div>
+  </div>`;
+  document.getElementById('main').innerHTML = html;
+  changedKeys.clear(); updateChangesUI();
+}
+
+function onStatChange(input) {
+  const key = input.dataset.key;
+  if (input.value !== input.dataset.original) { changedKeys.add(key); input.style.color='var(--p2)'; }
+  else { changedKeys.delete(key); input.style.color=''; }
+  updateChangesUI();
+}
+function updateChangesUI() {
+  const n = changedKeys.size;
+  const cl = document.getElementById('ch-count'); const sb2 = document.getElementById('save-btn');
+  if (!cl || !sb2) return;
+  cl.innerHTML = n === 0 ? 'No unsaved changes' : `<span style="color:var(--p);font-weight:600;">${n}</span> unsaved change${n!==1?'s':''}`;
+  sb2.disabled = n === 0;
+}
+async function saveStats() {
+  const btn = document.getElementById('save-btn');
+  if (!btn || changedKeys.size === 0) return;
+  btn.disabled=true; btn.textContent='Saving...';
+  const now = new Date().toISOString();
+  try {
+    const ups = [...changedKeys].map(key => { const inp = document.getElementById('inp-'+key); return sb.from('stats').update({value:inp.value, updated_at:now}).eq('key',key); });
+    const results = await Promise.all(ups);
+    const errs = results.filter(r=>r.error);
+    if (errs.length) throw new Error(errs[0].error.message);
+    changedKeys.forEach(key => {
+      const inp = document.getElementById('inp-'+key);
+      if (inp) { inp.dataset.original=inp.value; inp.style.color=''; }
+      const s = allStats.find(x=>x.key===key);
+      if (s) { s.value=inp?.value; s.updated_at=now; }
+      const upd = document.getElementById('upd-'+key);
+      if (upd) upd.textContent = fmtShort(now);
+    });
+    changedKeys.clear(); updateChangesUI();
+    showToast('Statistics saved', 'success');
+  } catch(e) { showToast('Save failed: '+e.message, 'error'); }
+  finally { btn.textContent='Save Changes'; btn.disabled=changedKeys.size===0; }
+}
+function discardStats() {
+  changedKeys.forEach(key => { const inp = document.getElementById('inp-'+key); if (inp) { inp.value=inp.dataset.original; inp.style.color=''; } });
+  changedKeys.clear(); updateChangesUI();
+}
+
+// ─── SHARED FILE UPLOAD UTILITY ───
+// bucket: 'releases' | 'legacy' | 'news'
+// zoneId: DOM id of the upload zone container
+// onUploaded: callback(publicUrl)
+async function handleFileUpload(file, bucket, zoneId, onUploaded) {
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { showToast('File too large — max 10MB', 'error'); return; }
+  if (!file.type.startsWith('image/')) { showToast('Only image files are supported', 'error'); return; }
+
+  const zone = document.getElementById(zoneId);
+  const progressBar = zone?.querySelector('.upload-progress-fill');
+  const progressWrap = zone?.querySelector('.upload-progress');
+  if (progressWrap) progressWrap.classList.add('active');
+  if (progressBar) progressBar.style.width = '30%';
+
+  try {
+    const ext = file.name.split('.').pop();
+    const path = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+
+    if (progressBar) progressBar.style.width = '60%';
+
+    const { error: uploadError } = await sb.storage.from(bucket).upload(path, file, { cacheControl: '3600', upsert: false });
+    if (uploadError) throw uploadError;
+
+    if (progressBar) progressBar.style.width = '90%';
+
+    const { data: urlData } = sb.storage.from(bucket).getPublicUrl(path);
+    if (progressBar) progressBar.style.width = '100%';
+
+    setTimeout(() => { if (progressWrap) progressWrap.classList.remove('active'); if (progressBar) progressBar.style.width='0%'; }, 500);
+
+    onUploaded(urlData.publicUrl);
+    showToast('Image uploaded', 'success');
+  } catch (e) {
+    if (progressWrap) progressWrap.classList.remove('active');
+    const msg = e.message && e.message.includes('Bucket not found')
+      ? `Bucket "${bucket}" doesn't exist yet. Create it in Supabase Storage first.`
+      : 'Upload failed: ' + e.message;
+    showToast(msg, 'error');
+  }
+}
+
+function renderUploadZone(zoneId, currentUrl, bucket, onUploadedFnName) {
+  return `
+    <div class="upload-zone ${currentUrl?'has-image':''}" id="${zoneId}">
+      ${currentUrl
+        ? `<img class="upload-preview" src="${currentUrl}">
+           <div class="upload-replace-bar"><span>Click to replace image</span><span style="color:var(--p);">Change →</span></div>`
+        : `<div class="upload-hint"><strong>Click to upload</strong> or drag an image here<br>JPG, PNG, WEBP — max 10MB</div>`
+      }
+      <input type="file" accept="image/*" onchange="handleFileUpload(this.files[0], '${bucket}', '${zoneId}', ${onUploadedFnName})">
+    </div>
+    <div class="upload-progress"><div class="upload-progress-fill"></div></div>
+  `;
+}
+
+// ─── RELEASES ───
+function renderReleases() {
+  const filtered = releaseFilter === 'all' ? allReleases
+    : releaseFilter === 'planetary' ? allReleases.filter(r => r.collection === 'Planetary Series')
+    : allReleases.filter(r => r.type === releaseFilter);
+
+  let html = `
+    <div class="page-hdr">
+      <div><h1>Releases</h1><p>Manage every single, EP, album, and Planetary Series chapter</p></div>
+      <div class="page-hdr-actions"><button class="btn btn-primary" onclick="openReleaseModal()">+ New Release</button></div>
+    </div>
+    <div class="content-toolbar">
+      <div class="filter-chip ${releaseFilter==='all'?'active':''}" onclick="setReleaseFilter('all')">All (${allReleases.length})</div>
+      <div class="filter-chip ${releaseFilter==='single'?'active':''}" onclick="setReleaseFilter('single')">Singles</div>
+      <div class="filter-chip ${releaseFilter==='ep'?'active':''}" onclick="setReleaseFilter('ep')">EPs</div>
+      <div class="filter-chip ${releaseFilter==='album'?'active':''}" onclick="setReleaseFilter('album')">Albums</div>
+      <div class="filter-chip ${releaseFilter==='planetary'?'active':''}" onclick="setReleaseFilter('planetary')">Planetary Series</div>
+    </div>
+  `;
+
+  if (!filtered.length) {
+    html += `<div class="list-empty"><div class="list-empty-text">No releases in this category yet.</div><button class="btn btn-primary" onclick="openReleaseModal()">+ Create Your First Release</button></div>`;
+  } else {
+    html += `<div class="item-grid">` + filtered.map(r => `
+      <div class="item-card">
+        <div class="item-cover">
+          ${r.cover_url ? `<img src="${r.cover_url}">` : `<div class="item-cover-empty">♪</div>`}
+          <span class="item-status-badge badge-${r.status}">${r.status}</span>
+          ${r.featured ? '<span class="item-featured-star">★</span>' : ''}
+        </div>
+        <div class="item-body">
+          <span class="item-cat">${r.collection || r.type}</span>
+          <div class="item-title">${r.title}</div>
+          <div class="item-meta">${fmt(r.release_date)} ${r.planet ? '· '+r.planet : ''}</div>
+          <div class="item-actions">
+            <button class="btn btn-secondary btn-sm" onclick="openReleaseModal('${r.id}')">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteRelease('${r.id}','${r.title.replace(/'/g,"\\'")}')">Delete</button>
+          </div>
+        </div>
+      </div>
+    `).join('') + `</div>`;
+  }
+  document.getElementById('main').innerHTML = html;
+}
+
+function setReleaseFilter(f) { releaseFilter = f; renderReleases(); }
+
+function openReleaseModal(id) {
+  editingRelease = id ? allReleases.find(r => r.id === id) : null;
+  pendingUploadUrl.release = editingRelease?.cover_url || null;
+  document.getElementById('modal-title').textContent = editingRelease ? 'Edit Release · ' + editingRelease.title : 'New Release';
+  renderReleaseForm(editingRelease);
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function onReleaseCoverUploaded(url) {
+  pendingUploadUrl.release = url;
+  const zone = document.getElementById('release-cover-zone');
+  if (zone) zone.outerHTML = renderUploadZone('release-cover-zone', url, 'releases', 'onReleaseCoverUploaded');
+}
+
+function renderReleaseForm(r) {
+  const v = (f, fb='') => r ? (r[f] ?? fb) : fb;
+  const links = r?.streaming_links || {};
+  const tracks = r?.tracklist || [];
+  const isPlanetary = v('collection') === 'Planetary Series';
+
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-section">
+      <span class="modal-section-label">Artwork</span>
+      ${renderUploadZone('release-cover-zone', v('cover_url'), 'releases', 'onReleaseCoverUploaded')}
+    </div>
+    <div class="modal-section">
+      <span class="modal-section-label">Details</span>
+      <div class="field"><label>Title</label><input type="text" id="rf-title" value="${v('title')}" placeholder="e.g. Moon"></div>
+      <div class="field"><label>Subtitle</label><input type="text" id="rf-subtitle" value="${v('subtitle')}" placeholder="e.g. Deluxe Edition (optional)"></div>
+      <div class="input-row">
+        <div class="field"><label>Type</label>
+          <select id="rf-type">
+            <option value="single" ${v('type')==='single'?'selected':''}>Single</option>
+            <option value="ep" ${v('type')==='ep'?'selected':''}>EP</option>
+            <option value="album" ${v('type')==='album'?'selected':''}>Album</option>
+          </select>
+        </div>
+        <div class="field"><label>Release Date</label><input type="date" id="rf-date" value="${v('release_date')}"></div>
+      </div>
+      <div class="input-row">
+        <div class="field"><label>Collection</label>
+          <select id="rf-collection" onchange="document.getElementById('rf-planet-wrap').style.display=this.value==='Planetary Series'?'block':'none'">
+            <option value="" ${!v('collection')?'selected':''}>None</option>
+            <option value="Planetary Series" ${isPlanetary?'selected':''}>Planetary Series</option>
+          </select>
+        </div>
+        <div class="field" id="rf-planet-wrap" style="display:${isPlanetary?'block':'none'};">
+          <label>Planet</label>
+          <select id="rf-planet">
+            ${['Mercury','Venus','Earth','Moon','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'].map(p=>`<option value="${p}" ${v('planet')===p?'selected':''}>${p}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Era</label><input type="text" id="rf-era" value="${v('era')}" placeholder="e.g. Slut Pink"></div>
+      <div class="field"><label>Description</label><textarea id="rf-desc" placeholder="Editorial description">${v('description')}</textarea></div>
+    </div>
+
+    <div class="modal-section">
+      <span class="modal-section-label">Streaming Links</span>
+      <div class="field"><label>Smart Link (all platforms)</label><input type="text" id="rf-smart" value="${links.smart_link||''}" placeholder="https://ffm.to/... — fills every platform at once"></div>
+      <div class="input-row">
+        <div class="field"><label>Spotify</label><input type="text" id="rf-spotify" value="${links.spotify||''}"></div>
+        <div class="field"><label>Apple Music</label><input type="text" id="rf-apple" value="${links.apple_music||''}"></div>
+      </div>
+      <div class="input-row">
+        <div class="field"><label>YouTube</label><input type="text" id="rf-youtube" value="${links.youtube||''}"></div>
+        <div class="field"><label>YouTube Music</label><input type="text" id="rf-ytmusic" value="${links.youtube_music||''}"></div>
+      </div>
+      <div class="input-row">
+        <div class="field"><label>Amazon Music</label><input type="text" id="rf-amazon" value="${links.amazon_music||''}"></div>
+        <div class="field"><label>SoundCloud</label><input type="text" id="rf-soundcloud" value="${links.soundcloud||''}"></div>
+      </div>
+      <div class="field"><label>Audiomack</label><input type="text" id="rf-audiomack" value="${links.audiomack||''}"></div>
+    </div>
+
+    <div class="modal-section">
+      <span class="modal-section-label">Tracklist</span>
+      <div class="tracklist-editor" id="tracklist-editor">
+        ${tracks.map((t,i) => trackRow(t,i)).join('')}
+      </div>
+      <button class="add-track-btn" onclick="addTrackRow()">+ Add Track</button>
+    </div>
+
+    <div class="modal-section">
+      <span class="modal-section-label">Credits</span>
+      <div class="field"><textarea id="rf-credits" placeholder="Producers, writers, features...">${v('credits')}</textarea></div>
+    </div>
+
+    <div class="modal-section">
+      <span class="modal-section-label">Publishing</span>
+      <div class="toggle-row"><span class="toggle-row-label">Featured Release</span><div class="toggle ${v('featured')?'on':''}" id="rf-featured" onclick="this.classList.toggle('on')"></div></div>
+      <div class="input-row" style="margin-top:12px;">
+        <div class="field"><label>Display Order</label><input type="number" id="rf-order" value="${v('display_order',0)}"></div>
+        <div class="field"><label>Status</label>
+          <select id="rf-status">
+            <option value="draft" ${v('status','draft')==='draft'?'selected':''}>Draft</option>
+            <option value="published" ${v('status')==='published'?'selected':''}>Published</option>
+            <option value="archived" ${v('status')==='archived'?'selected':''}>Archived</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRelease()">${r?'Save Release':'Create Release'}</button>
+    </div>
+  `;
+}
+
+let trackIdCounter = 0;
+function trackRow(t, i) {
+  const tid = 'trk' + (trackIdCounter++);
+  return `<div class="track-row" data-tid="${tid}">
+    <input type="text" placeholder="#" value="${t.track_number||i+1}" class="trk-num">
+    <input type="text" placeholder="Track title" value="${t.title||''}" class="trk-title">
+    <input type="text" placeholder="3:24" value="${t.duration||''}" class="trk-dur">
+    <input type="text" placeholder="Features" value="${t.features||''}" class="trk-feat">
+    <button class="track-remove" onclick="this.closest('.track-row').remove()">✕</button>
+  </div>`;
+}
+function addTrackRow() {
+  const editor = document.getElementById('tracklist-editor');
+  const count = editor.children.length;
+  editor.insertAdjacentHTML('beforeend', trackRow({}, count));
+}
+
+function collectTracklist() {
+  return [...document.querySelectorAll('#tracklist-editor .track-row')].map(row => ({
+    track_number: parseInt(row.querySelector('.trk-num').value) || 0,
+    title: row.querySelector('.trk-title').value.trim(),
+    duration: row.querySelector('.trk-dur').value.trim(),
+    features: row.querySelector('.trk-feat').value.trim(),
+    lyrics_url: '',
+  })).filter(t => t.title);
+}
+
+async function saveRelease() {
+  const title = document.getElementById('rf-title').value.trim();
+  if (!title) { showToast('Title is required', 'error'); return; }
+
+  const payload = {
+    title,
+    subtitle: document.getElementById('rf-subtitle').value.trim() || null,
+    type: document.getElementById('rf-type').value,
+    collection: document.getElementById('rf-collection').value || null,
+    planet: document.getElementById('rf-collection').value === 'Planetary Series' ? document.getElementById('rf-planet').value : null,
+    era: document.getElementById('rf-era').value.trim() || null,
+    release_date: document.getElementById('rf-date').value || null,
+    description: document.getElementById('rf-desc').value.trim() || null,
+    cover_url: pendingUploadUrl.release,
+    streaming_links: {
+      smart_link: document.getElementById('rf-smart').value.trim(),
+      spotify: document.getElementById('rf-spotify').value.trim(),
+      apple_music: document.getElementById('rf-apple').value.trim(),
+      youtube: document.getElementById('rf-youtube').value.trim(),
+      youtube_music: document.getElementById('rf-ytmusic').value.trim(),
+      amazon_music: document.getElementById('rf-amazon').value.trim(),
+      soundcloud: document.getElementById('rf-soundcloud').value.trim(),
+      audiomack: document.getElementById('rf-audiomack').value.trim(),
+    },
+    tracklist: collectTracklist(),
+    credits: document.getElementById('rf-credits').value.trim() || null,
+    featured: document.getElementById('rf-featured').classList.contains('on'),
+    display_order: parseInt(document.getElementById('rf-order').value) || 0,
+    status: document.getElementById('rf-status').value,
+    updated_at: new Date().toISOString(),
+  };
+
+  let error;
+  if (editingRelease) { ({ error } = await sb.from('releases').update(payload).eq('id', editingRelease.id)); }
+  else { ({ error } = await sb.from('releases').insert(payload)); }
+
+  if (error) { showToast('Save failed: '+error.message, 'error'); return; }
+  showToast(editingRelease ? 'Release updated' : 'Release created', 'success');
+  closeModal();
+  await loadReleases();
+  renderReleases();
+}
+
+async function deleteRelease(id, title) {
+  if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+  const { error } = await sb.from('releases').delete().eq('id', id);
+  if (error) { showToast('Delete failed: '+error.message, 'error'); return; }
+  showToast('Release deleted', 'success');
+  await loadReleases();
+  renderReleases();
+}
+
+// ─── NEWS ───
+function renderNews() {
+  const filtered = newsFilter === 'all' ? allNews : allNews.filter(n => n.status === newsFilter);
+
+  let html = `
+    <div class="page-hdr">
+      <div><h1>News</h1><p>Official SPACE announcements and articles</p></div>
+      <div class="page-hdr-actions"><button class="btn btn-primary" onclick="openNewsModal()">+ New Article</button></div>
+    </div>
+    <div class="content-toolbar">
+      <div class="filter-chip ${newsFilter==='all'?'active':''}" onclick="setNewsFilter('all')">All (${allNews.length})</div>
+      <div class="filter-chip ${newsFilter==='draft'?'active':''}" onclick="setNewsFilter('draft')">Drafts</div>
+      <div class="filter-chip ${newsFilter==='published'?'active':''}" onclick="setNewsFilter('published')">Published</div>
+      <div class="filter-chip ${newsFilter==='archived'?'active':''}" onclick="setNewsFilter('archived')">Archived</div>
+    </div>
+  `;
+
+  if (!filtered.length) {
+    html += `<div class="list-empty"><div class="list-empty-text">No articles here yet.</div><button class="btn btn-primary" onclick="openNewsModal()">+ Write Your First Article</button></div>`;
+  } else {
+    html += `<div class="item-grid">` + filtered.map(n => `
+      <div class="item-card">
+        <div class="item-cover">
+          ${n.cover_url ? `<img src="${n.cover_url}">` : `<div class="item-cover-empty">✎</div>`}
+          <span class="item-status-badge badge-${n.status}">${n.status}</span>
+          ${n.featured ? '<span class="item-featured-star">★</span>' : ''}
+        </div>
+        <div class="item-body">
+          <span class="item-cat">${n.tags && n.tags.length ? n.tags[0] : 'News'}</span>
+          <div class="item-title">${n.headline}</div>
+          <div class="item-meta">${fmt(n.publish_date)} · /#/news/${n.slug}</div>
+          <div class="item-actions">
+            <button class="btn btn-secondary btn-sm" onclick="openNewsModal('${n.id}')">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteNews('${n.id}','${n.headline.replace(/'/g,"\\'")}')">Delete</button>
+          </div>
+        </div>
+      </div>
+    `).join('') + `</div>`;
+  }
+  document.getElementById('main').innerHTML = html;
+}
+
+function setNewsFilter(f) { newsFilter = f; renderNews(); }
+
+function openNewsModal(id) {
+  editingNews = id ? allNews.find(n => n.id === id) : null;
+  pendingUploadUrl.news = editingNews?.cover_url || null;
+  document.getElementById('modal-title').textContent = editingNews ? 'Edit Article · ' + editingNews.headline : 'New Article';
+  renderNewsForm(editingNews);
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function onNewsCoverUploaded(url) {
+  pendingUploadUrl.news = url;
+  const zone = document.getElementById('news-cover-zone');
+  if (zone) zone.outerHTML = renderUploadZone('news-cover-zone', url, 'news', 'onNewsCoverUploaded');
+}
+
+function renderNewsForm(n) {
+  const v = (f, fb='') => n ? (n[f] ?? fb) : fb;
+  const tags = (n?.tags || []).join(', ');
+  const todayIso = new Date().toISOString().slice(0,16);
+
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-section">
+      <span class="modal-section-label">Cover Image</span>
+      ${renderUploadZone('news-cover-zone', v('cover_url'), 'news', 'onNewsCoverUploaded')}
+    </div>
+    <div class="modal-section">
+      <span class="modal-section-label">Article</span>
+      <div class="field"><label>Headline</label><input type="text" id="nf-headline" value="${v('headline')}" placeholder="e.g. Moon EP Out Now"></div>
+      <div class="field"><label>Slug ${n?'':'(auto-generated if left blank)'}</label><input type="text" id="nf-slug" value="${v('slug')}" placeholder="moon-ep-out-now"></div>
+      <div class="field"><label>Excerpt</label><textarea id="nf-excerpt" placeholder="Short summary shown in previews (~200 characters)">${v('excerpt')}</textarea></div>
+      <div class="field"><label>Full Article</label><textarea id="nf-article" placeholder="Full article content" style="min-height:180px;">${v('article')}</textarea></div>
+    </div>
+    <div class="modal-section">
+      <span class="modal-section-label">Publishing</span>
+      <div class="input-row">
+        <div class="field"><label>Publish Date</label><input type="datetime-local" id="nf-date" value="${v('publish_date') ? v('publish_date').slice(0,16) : todayIso}"></div>
+        <div class="field"><label>Author</label><input type="text" id="nf-author" value="${v('author','SPACE THE RULER')}"></div>
+      </div>
+      <div class="field"><label>Tags (comma-separated)</label><input type="text" id="nf-tags" value="${tags}" placeholder="music, business, era"></div>
+      <div class="toggle-row"><span class="toggle-row-label">Featured Article</span><div class="toggle ${v('featured')?'on':''}" id="nf-featured" onclick="this.classList.toggle('on')"></div></div>
+      <div class="field" style="margin-top:12px;"><label>Status</label>
+        <select id="nf-status">
+          <option value="draft" ${v('status','draft')==='draft'?'selected':''}>Draft</option>
+          <option value="published" ${v('status')==='published'?'selected':''}>Published</option>
+          <option value="archived" ${v('status')==='archived'?'selected':''}>Archived</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNews()">${n?'Save Article':'Publish Article'}</button>
+    </div>
+  `;
+}
+
+async function saveNews() {
+  const headline = document.getElementById('nf-headline').value.trim();
+  if (!headline) { showToast('Headline is required', 'error'); return; }
+
+  const tagsRaw = document.getElementById('nf-tags').value.trim();
+  const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
+  const slugInput = document.getElementById('nf-slug').value.trim();
+
+  const payload = {
+    headline,
+    slug: slugInput || null,
+    cover_url: pendingUploadUrl.news,
+    article: document.getElementById('nf-article').value.trim() || null,
+    excerpt: document.getElementById('nf-excerpt').value.trim() || null,
+    publish_date: document.getElementById('nf-date').value ? new Date(document.getElementById('nf-date').value).toISOString() : null,
+    author: document.getElementById('nf-author').value.trim() || 'SPACE THE RULER',
+    tags,
+    featured: document.getElementById('nf-featured').classList.contains('on'),
+    status: document.getElementById('nf-status').value,
+    updated_at: new Date().toISOString(),
+  };
+
+  let error;
+  if (editingNews) { ({ error } = await sb.from('news').update(payload).eq('id', editingNews.id)); }
+  else { ({ error } = await sb.from('news').insert(payload)); }
+
+  if (error) { showToast('Save failed: '+error.message, 'error'); return; }
+  showToast(editingNews ? 'Article updated' : 'Article published', 'success');
+  closeModal();
+  await loadNews();
+  renderNews();
+}
+
+async function deleteNews(id, headline) {
+  if (!confirm(`Delete "${headline}"? This cannot be undone.`)) return;
+  const { error } = await sb.from('news').delete().eq('id', id);
+  if (error) { showToast('Delete failed: '+error.message, 'error'); return; }
+  showToast('Article deleted', 'success');
+  await loadNews();
+  renderNews();
+}
+
+// ─── LEGACY ───
+const LEGACY_CATEGORIES = ['award','certification','chart_position','interview','magazine_cover','business_launch','sold_out_show','milestone','partnership','brand_launch','world_record','achievement','other'];
+const LEGACY_CAT_LABELS = { award:'Award', certification:'Certification', chart_position:'Chart Position', interview:'Interview', magazine_cover:'Magazine Cover', business_launch:'Business Launch', sold_out_show:'Sold Out Show', milestone:'Milestone', partnership:'Partnership', brand_launch:'Brand Launch', world_record:'World Record', achievement:'Achievement', other:'Other' };
+
+function renderLegacy() {
+  const filtered = legacyFilter === 'all' ? allLegacy : allLegacy.filter(l => l.category === legacyFilter);
+
+  let html = `
+    <div class="page-hdr">
+      <div><h1>Legacy</h1><p>The permanent museum of the SPACE THE RULER career</p></div>
+      <div class="page-hdr-actions"><button class="btn btn-primary" onclick="openLegacyModal()">+ New Legacy Item</button></div>
+    </div>
+    <div class="content-toolbar">
+      <div class="filter-chip ${legacyFilter==='all'?'active':''}" onclick="setLegacyFilter('all')">All (${allLegacy.length})</div>
+      ${LEGACY_CATEGORIES.map(c => `<div class="filter-chip ${legacyFilter===c?'active':''}" onclick="setLegacyFilter('${c}')">${LEGACY_CAT_LABELS[c]}</div>`).join('')}
+    </div>
+  `;
+
+  if (!filtered.length) {
+    html += `<div class="list-empty"><div class="list-empty-text">No legacy items in this category yet.</div><button class="btn btn-primary" onclick="openLegacyModal()">+ Add Your First Milestone</button></div>`;
+  } else {
+    html += `<div class="item-grid">` + filtered.map(l => `
+      <div class="item-card">
+        <div class="item-cover">
+          ${l.image_url ? `<img src="${l.image_url}">` : `<div class="item-cover-empty">◆</div>`}
+          ${l.featured ? '<span class="item-featured-star">★</span>' : ''}
+        </div>
+        <div class="item-body">
+          <span class="item-cat">${LEGACY_CAT_LABELS[l.category]||l.category}</span>
+          <div class="item-title">${l.title}</div>
+          <div class="item-meta">${fmt(l.event_date)} · Importance ${l.importance}/5</div>
+          <div class="item-actions">
+            <button class="btn btn-secondary btn-sm" onclick="openLegacyModal('${l.id}')">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteLegacy('${l.id}','${l.title.replace(/'/g,"\\'")}')">Delete</button>
+          </div>
+        </div>
+      </div>
+    `).join('') + `</div>`;
+  }
+  document.getElementById('main').innerHTML = html;
+}
+
+function setLegacyFilter(f) { legacyFilter = f; renderLegacy(); }
+
+function openLegacyModal(id) {
+  editingLegacy = id ? allLegacy.find(l => l.id === id) : null;
+  pendingUploadUrl.legacy = editingLegacy?.image_url || null;
+  document.getElementById('modal-title').textContent = editingLegacy ? 'Edit Legacy Item · ' + editingLegacy.title : 'New Legacy Item';
+  renderLegacyForm(editingLegacy);
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function onLegacyImageUploaded(url) {
+  pendingUploadUrl.legacy = url;
+  const zone = document.getElementById('legacy-image-zone');
+  if (zone) zone.outerHTML = renderUploadZone('legacy-image-zone', url, 'legacy', 'onLegacyImageUploaded');
+}
+
+function renderLegacyForm(l) {
+  const v = (f, fb='') => l ? (l[f] ?? fb) : fb;
+
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-section">
+      <span class="modal-section-label">Image</span>
+      ${renderUploadZone('legacy-image-zone', v('image_url'), 'legacy', 'onLegacyImageUploaded')}
+    </div>
+    <div class="modal-section">
+      <span class="modal-section-label">Details</span>
+      <div class="field"><label>Title</label><input type="text" id="lf-title" value="${v('title')}" placeholder="e.g. First Sold Out Show"></div>
+      <div class="field"><label>Category</label>
+        <select id="lf-category">
+          ${LEGACY_CATEGORIES.map(c=>`<option value="${c}" ${v('category')===c?'selected':''}>${LEGACY_CAT_LABELS[c]}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>Description</label><textarea id="lf-desc" placeholder="What happened, and why it matters">${v('description')}</textarea></div>
+      <div class="input-row">
+        <div class="field"><label>Date</label><input type="date" id="lf-date" value="${v('event_date')}"></div>
+        <div class="field"><label>Importance (1–5)</label><input type="number" id="lf-importance" min="1" max="5" value="${v('importance',3)}"></div>
+      </div>
+    </div>
+    <div class="modal-section">
+      <span class="modal-section-label">Display</span>
+      <div class="toggle-row"><span class="toggle-row-label">Featured</span><div class="toggle ${v('featured')?'on':''}" id="lf-featured" onclick="this.classList.toggle('on')"></div></div>
+      <div class="field" style="margin-top:12px;"><label>Display Order</label><input type="number" id="lf-order" value="${v('display_order',0)}"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLegacy()">${l?'Save Item':'Add to Legacy'}</button>
+    </div>
+  `;
+}
+
+async function saveLegacy() {
+  const title = document.getElementById('lf-title').value.trim();
+  if (!title) { showToast('Title is required', 'error'); return; }
+
+  const payload = {
+    title,
+    category: document.getElementById('lf-category').value,
+    description: document.getElementById('lf-desc').value.trim() || null,
+    image_url: pendingUploadUrl.legacy,
+    event_date: document.getElementById('lf-date').value || null,
+    importance: parseInt(document.getElementById('lf-importance').value) || 3,
+    featured: document.getElementById('lf-featured').classList.contains('on'),
+    display_order: parseInt(document.getElementById('lf-order').value) || 0,
+    updated_at: new Date().toISOString(),
+  };
+
+  let error;
+  if (editingLegacy) { ({ error } = await sb.from('legacy').update(payload).eq('id', editingLegacy.id)); }
+  else { ({ error } = await sb.from('legacy').insert(payload)); }
+
+  if (error) { showToast('Save failed: '+error.message, 'error'); return; }
+  showToast(editingLegacy ? 'Legacy item updated' : 'Added to legacy', 'success');
+  closeModal();
+  await loadLegacy();
+  renderLegacy();
+}
+
+async function deleteLegacy(id, title) {
+  if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+  const { error } = await sb.from('legacy').delete().eq('id', id);
+  if (error) { showToast('Delete failed: '+error.message, 'error'); return; }
+  showToast('Legacy item deleted', 'success');
+  await loadLegacy();
+  renderLegacy();
+}
+
+// ─── ERA ENGINE (unchanged logic from v1) ───
+function renderThemes() {
+  let html = `
+    <div class="page-hdr"><h1>Era Engine</h1><p>Activate an era to instantly update the entire visual identity of the public website</p></div>
+    <button class="add-theme-btn" onclick="openNewThemeModal()">+ Create New Era Theme</button>
+    <div class="theme-grid">
+  `;
+  allThemes.forEach(theme => {
+    const isActive = theme.is_active;
+    html += `
+      <div class="theme-card ${isActive?'active-theme':''}">
+        <div class="tc-preview" style="background:${theme.color_background||'#060305'};">
+          <div class="tc-preview-orb" style="background:${theme.color_primary};top:10px;left:30px;"></div>
+          <div class="tc-preview-orb" style="background:${theme.color_secondary};bottom:5px;right:20px;width:26px;height:26px;"></div>
+          <span class="tc-preview-label">${theme.season_era||theme.name}</span>
+        </div>
+        <div class="tc-body">
+          ${isActive ? '<div class="tc-active-badge">Active Era</div>' : ''}
+          <div class="tc-name">${theme.name}</div>
+          <div class="tc-era">${theme.description||'No description'}</div>
+          <div class="tc-colors">
+            <div class="tc-swatch" style="background:${theme.color_primary};"></div>
+            <div class="tc-swatch" style="background:${theme.color_secondary};"></div>
+            <div class="tc-swatch" style="background:${theme.color_accent};"></div>
+            <div class="tc-swatch" style="background:${theme.color_background};"></div>
+          </div>
+          <div class="tc-actions">
+            <button class="btn btn-primary btn-sm" style="flex:1;" ${isActive?'disabled':''} onclick="activateTheme('${theme.id}','${theme.name}')">${isActive?'Active':'Activate'}</button>
+            <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="openEditThemeModal('${theme.id}')">Edit</button>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  html += `</div>`;
+  document.getElementById('main').innerHTML = html;
+}
+
+async function activateTheme(id, name) {
+  showToast('Activating ' + name + '...', 'info');
+  const { error } = await sb.from('themes').update({is_active:true, updated_at:new Date().toISOString()}).eq('id',id);
+  if (error) { showToast('Failed: '+error.message,'error'); return; }
+  await loadThemes();
+  renderThemes();
+  showToast(name + ' is now active', 'success');
+}
+
+function openNewThemeModal() {
+  editingTheme = null;
+  document.getElementById('modal-title').textContent = 'Create New Era Theme';
+  renderThemeForm(null);
+  document.getElementById('modal-overlay').classList.add('show');
+}
+function openEditThemeModal(id) {
+  editingTheme = allThemes.find(t => t.id === id);
+  document.getElementById('modal-title').textContent = 'Edit Theme · ' + (editingTheme?.name||'');
+  renderThemeForm(editingTheme);
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function renderThemeForm(theme) {
+  const v = (field, fallback='') => theme ? (theme[field]||fallback) : fallback;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-section">
+      <span class="modal-section-label">Identity</span>
+      <div class="field"><label>Theme Name</label><input type="text" id="tf-name" value="${v('name')}" placeholder="e.g. Mars Era"></div>
+      <div class="field"><label>Season / Era</label><input type="text" id="tf-era" value="${v('season_era')}" placeholder="e.g. Mars"></div>
+      <div class="field"><label>Description</label><textarea id="tf-desc">${v('description')}</textarea></div>
+    </div>
+    <div class="modal-section">
+      <span class="modal-section-label">Colors</span>
+      <div class="color-grid">
+        ${colorField('Primary','tf-color-p', v('color_primary','#D9437A'))}
+        ${colorField('Secondary','tf-color-s', v('color_secondary','#F272AE'))}
+        ${colorField('Accent','tf-color-a', v('color_accent','#A6123A'))}
+        ${colorField('Background','tf-color-bg', v('color_background','#060305'))}
+        ${colorField('Surface','tf-color-sf', v('color_surface','#0c0709'))}
+      </div>
+    </div>
+    <div class="modal-section">
+      <span class="modal-section-label">Backgrounds</span>
+      ${renderUploadZone('theme-wallpaper-zone', v('wallpaper_desktop_url'), 'wallpapers', 'onThemeWallpaperUploaded')}
+      <div class="field" style="margin-top:14px;"><label>Mobile Wallpaper URL (optional)</label><input type="text" id="tf-wp-mobile" value="${v('wallpaper_mobile_url')}" placeholder="Leave blank to use desktop wallpaper"></div>
+      <div class="field"><label>Overlay Opacity (0.0 – 1.0)</label><input type="number" id="tf-opacity" value="${v('overlay_opacity','0.6')}" min="0" max="1" step="0.05"></div>
+    </div>
+    <div class="modal-section">
+      <span class="modal-section-label">Effects</span>
+      <div class="toggle-row"><span class="toggle-row-label">Particle Effect</span><div class="toggle ${v('particle_effect')?'on':''}" id="tf-particles" onclick="this.classList.toggle('on')"></div></div>
+      <div class="field" style="margin-top:14px;"><label>Logo Variant</label>
+        <select id="tf-logo">
+          <option value="chrome" ${v('logo_variant')==='chrome'?'selected':''}>Chrome</option>
+          <option value="diamond" ${v('logo_variant')==='diamond'?'selected':''}>Diamond</option>
+          <option value="gold" ${v('logo_variant')==='gold'?'selected':''}>Gold</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTheme()">${editingTheme?'Save Theme':'Create Theme'}</button>
+    </div>
+  `;
+}
+
+let pendingThemeWallpaper = null;
+function onThemeWallpaperUploaded(url) {
+  pendingThemeWallpaper = url;
+  const zone = document.getElementById('theme-wallpaper-zone');
+  if (zone) zone.outerHTML = renderUploadZone('theme-wallpaper-zone', url, 'wallpapers', 'onThemeWallpaperUploaded');
+}
+
+function colorField(label, id, value) {
+  return `<div class="color-field"><label>${label}</label><div class="color-input-wrap">
+    <input type="color" id="${id}-picker" value="${value}" oninput="document.getElementById('${id}').value=this.value">
+    <input type="text" id="${id}" value="${value}" maxlength="7" oninput="syncColor(this,'${id}-picker')">
+  </div></div>`;
+}
+function syncColor(input, pickerId) { if (/^#[0-9A-Fa-f]{6}$/.test(input.value)) document.getElementById(pickerId).value = input.value; }
+
+async function saveTheme() {
+  const name = document.getElementById('tf-name').value.trim();
+  if (!name) { showToast('Theme name is required','error'); return; }
+  const payload = {
+    name, season_era: document.getElementById('tf-era').value.trim()||null,
+    description: document.getElementById('tf-desc').value.trim()||null,
+    color_primary: document.getElementById('tf-color-p').value, color_secondary: document.getElementById('tf-color-s').value,
+    color_accent: document.getElementById('tf-color-a').value, color_background: document.getElementById('tf-color-bg').value,
+    color_surface: document.getElementById('tf-color-sf').value,
+    wallpaper_desktop_url: pendingThemeWallpaper !== null ? pendingThemeWallpaper : (editingTheme?.wallpaper_desktop_url || null),
+    wallpaper_mobile_url: document.getElementById('tf-wp-mobile').value.trim()||null,
+    overlay_opacity: parseFloat(document.getElementById('tf-opacity').value)||0.6,
+    particle_effect: document.getElementById('tf-particles').classList.contains('on'),
+    logo_variant: document.getElementById('tf-logo').value,
+    updated_at: new Date().toISOString(),
+  };
+  let error;
+  if (editingTheme) ({ error } = await sb.from('themes').update(payload).eq('id', editingTheme.id));
+  else ({ error } = await sb.from('themes').insert(payload));
+  if (error) { showToast('Save failed: '+error.message,'error'); return; }
+  showToast(editingTheme ? 'Theme updated' : 'Theme created', 'success');
+  pendingThemeWallpaper = null;
+  closeModal(); await loadThemes(); renderThemes();
+}
+
+// ─── STORAGE ───
+function renderStorage() {
+  document.getElementById('main').innerHTML = `
+    <div class="page-hdr"><h1>Storage</h1><p>Manage media buckets for releases, news, legacy, and era themes</p></div>
+    <div class="card">
+      <span class="card-title">Storage Buckets</span>
+      <p style="font-size:12px;color:var(--dim);margin-bottom:18px;line-height:1.7;">These buckets must be created manually in the Supabase dashboard, set to Public. Once created, uploads from Releases, News, Legacy, and Era Engine will work automatically.</p>
+      <div class="storage-bucket"><span class="bucket-icon">🎵</span><div><span class="bucket-name">releases</span><span class="bucket-desc">Album, EP, and single artwork</span></div><span class="bucket-status pending">Check Dashboard</span></div>
+      <div class="storage-bucket"><span class="bucket-icon">📰</span><div><span class="bucket-name">news</span><span class="bucket-desc">News article cover images</span></div><span class="bucket-status pending">Check Dashboard</span></div>
+      <div class="storage-bucket"><span class="bucket-icon">◆</span><div><span class="bucket-name">legacy</span><span class="bucket-desc">Legacy and achievement images</span></div><span class="bucket-status pending">Check Dashboard</span></div>
+      <div class="storage-bucket"><span class="bucket-icon">🖼️</span><div><span class="bucket-name">wallpapers</span><span class="bucket-desc">Desktop and mobile era backgrounds</span></div><span class="bucket-status pending">Check Dashboard</span></div>
+      <div class="storage-bucket"><span class="bucket-icon">🎬</span><div><span class="bucket-name">background-videos</span><span class="bucket-desc">Optional video backgrounds</span></div><span class="bucket-status pending">Check Dashboard</span></div>
+      <div class="storage-bucket"><span class="bucket-icon">🌌</span><div><span class="bucket-name">season-assets</span><span class="bucket-desc">Era-specific graphics and textures</span></div><span class="bucket-status pending">Check Dashboard</span></div>
+      <div class="storage-bucket"><span class="bucket-icon">📦</span><div><span class="bucket-name">themes</span><span class="bucket-desc">Theme package metadata</span></div><span class="bucket-status pending">Check Dashboard</span></div>
+    </div>
+    <div class="card">
+      <span class="card-title">Live Bucket Status</span>
+      <div id="storage-live-status"><div class="widget-empty">Loading from hq-health...</div></div>
+    </div>
+    <div class="card">
+      <span class="card-title">How to Create a Bucket</span>
+      <ol style="font-size:12px;color:var(--ch);line-height:2;padding-left:18px;">
+        <li>Go to <strong style="color:var(--p);">supabase.com</strong> → officialwebsiteSTR → <strong>Storage</strong></li>
+        <li>Click <strong>New bucket</strong> → enter the exact name shown above</li>
+        <li>Set to <strong>Public</strong></li>
+        <li>Once created, uploads from HQ will work immediately — no further setup needed</li>
+      </ol>
+    </div>
+  `;
+  loadStorageLiveStatus();
+}
+
+async function loadStorageLiveStatus() {
+  const box = document.getElementById('storage-live-status');
+  try {
+    const res = await fetch(SUPABASE_URL + '/functions/v1/hq-health', {
+      method:'POST', headers: { 'Authorization':'Bearer '+currentSession.access_token, 'Content-Type':'application/json' },
+    });
+    const data = await res.json();
+    const required = ['releases','news','legacy','wallpapers','background-videos','season-assets','themes'];
+    box.innerHTML = required.map(name => {
+      const found = data.storage_buckets.find(b => b.name === name);
+      return `<div class="health-row"><span class="health-label"><span class="health-dot ${found?'':'err'}"></span>${name}</span><span class="health-val">${found ? (found.public?'Ready · Public':'Exists · Private') : 'Not Created'}</span></div>`;
+    }).join('');
+  } catch(e) { box.innerHTML = '<div class="widget-empty">Unable to check bucket status</div>'; }
+}
+
+// ─── SETTINGS ───
+function renderSettings() {
+  const email = currentSession?.user?.email || '';
+  document.getElementById('main').innerHTML = `
+    <div class="page-hdr"><h1>Settings</h1><p>Profile and site-wide metadata</p></div>
+    <div class="card">
+      <span class="card-title">User Profile</span>
+      <div class="field"><label>Display Name</label><input type="text" id="set-display-name" placeholder="SPACE THE RULER"></div>
+      <div class="field"><label>Email</label><input type="text" value="${email}" disabled style="opacity:.5;"></div>
+      <div class="field"><label>Avatar / Profile Image URL</label><input type="text" id="set-avatar" placeholder="https://..."></div>
+    </div>
+    <div class="card">
+      <span class="card-title">Site Metadata</span>
+      <div class="field"><label>Site Title</label><input type="text" id="set-site-title" value="SPACE THE RULER" placeholder="Site title for browser tab / SEO"></div>
+      <div class="field"><label>Meta Description</label><textarea id="set-meta-desc" placeholder="SPACE THE RULER - Rapper, Producer and Creative Entrepreneur."></textarea></div>
+      <div class="field"><label>Open Graph Image URL</label><input type="text" id="set-og-image" placeholder="https://spacetheruler.com/og-image.jpg"></div>
+      <div class="field"><label>Contact Email</label><input type="text" id="set-contact-email" placeholder="youngastronautentertainment@gmail.com"></div>
+      <div class="field"><label>Social Handles (comma-separated)</label><input type="text" id="set-social" placeholder="@spacetheruler"></div>
+    </div>
+    <div class="card">
+      <p style="font-size:11px;color:var(--dim);line-height:1.7;">Settings are currently local-only in this build. A dedicated <code style="color:var(--p2);">site_settings</code> table with save functionality is planned for the next phase.</p>
+    </div>
+  `;
+}
+
+// ─── MODAL / TOAST ───
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+  editingTheme = null; editingRelease = null; editingLegacy = null; editingNews = null;
+  pendingThemeWallpaper = null;
+}
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+type+' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3800);
+}
+
+// ─── INIT ───
+document.getElementById('login-password').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
+document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === document.getElementById('modal-overlay')) closeModal(); });
+(async () => { const { data:{ session } } = await sb.auth.getSession(); if (session) await enterApp(session); })();
+</script>
+</body>
+</html>
